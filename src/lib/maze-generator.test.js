@@ -1,6 +1,47 @@
 import { expect } from 'chai';
 
-import { getEmptySquare, getPotentialMoves, getRandomOddNumber, placeRoom } from './maze-generator';
+import { getEmptySquare, getPotentialMoves, getRandomOddNumber, getRandomOrigin, initializeEmptyMap, placeRoom } from './maze-generator';
+
+
+describe('getRandomOddNumber()', () => {
+  const max = 15;
+
+  it('returns a known number if the random param is supplied', () => {
+    const random = Math.random();
+    const result = getRandomOddNumber(max, random);
+    expect(result).to.equal(((random * max / 2) | 0) * 2 + 1);
+  });
+  it('returns a maximum of max param if max is odd', () => {
+      const result = getRandomOddNumber(max, 0.99999999999999);
+      expect(result).to.equal(max);
+  });
+  it('returns a maximum of max - 1 if max is even', () => {
+    const result = getRandomOddNumber(16, 0.999999999999);
+    expect(result).to.equal(15);
+  });
+  it('returns a minimum of 1', () => {
+    const result = getRandomOddNumber(max, 0);
+    expect(result).to.equal(1);
+  });
+  it('returns a whole number even if random is not supplied', () => {
+    const result = getRandomOddNumber(max);
+    expect(result | 0).to.equal(result);
+  });
+});
+
+
+describe('getRandomOrigin()', () => {
+  const maxWidth = 15,
+        maxHeight = 16;
+  const roomWidth = 9,
+        roomHeight = 7;
+  it('returns an array of 2D coordinates', () => {
+    const result = getRandomOrigin(maxWidth, maxHeight, roomWidth, roomHeight);
+    expect(result).to.be.an('array');
+    expect(result.length).to.equal(2);
+  });
+});
+
 
 describe('getPotentialMoves()', () => {
   let width, height;
@@ -9,9 +50,9 @@ describe('getPotentialMoves()', () => {
     height = 20;
   });
 
-  it('should return `undefined` if passed invalid args', () => {
-    const result = getPotentialMoves(width, height, [-1, height + 1]);
-    expect(result).to.be.an('undefined');
+  it('should throw if passed invalid args', () => {
+    const invalidCall = () => getPotentialMoves(width, height, [-1, height + 1]);
+    expect(invalidCall).to.throw();
   });
 
   it('should return an array when called with valid args', () => {
@@ -39,13 +80,7 @@ describe('getEmptySquare()', () => {
   let map = [];
 
   beforeEach(() => {
-    for(let y = 0; y < height; y++) {
-      const row = [];
-      for(let x = 0; x < width; x++) {
-        row[x] = false;
-      }
-      map[y] = row;
-    }
+    map = initializeEmptyMap(width, height);
   });
 
   it('returns an array', () => {
@@ -73,80 +108,57 @@ describe('getEmptySquare()', () => {
 });
 
 
-// describe('getRandomRoom()', () => {
-//   const width = 20,
-//     height = 20;
-//   const maxRoomWidth = 20,
-//     maxRoomHeight = 20;
-//   let map = [],
-//     roomWidth,
-//     roomHeight;
+describe('initializeEmptyMap()', () => {
+  const width = 100,
+        height = 90;
 
-//   beforeEach(() => {
-//     width = getRandomOddNumber(maxWidth);
-//     height = getRandomOddNumber(maxHeight);
-//     for(let y = 0; y < height; y++) {
-//       const row = [];
-//       for(let x = 0; x < width; x++) {
-//         row[x] = false;
-//       }
-//       map[y] = row;
-//     }
-//   });
-
-//   it('should return an object', () => {
-//     const result = getRandomRoom(map, maxRoomWidth, maxRoomHeight);
-//     expect(result).to.be.an('object');
-//   });
-
-//   it('the returned object should have an origin, width, and height', () =>{
-//     const result = getRandomRoom(map, maxRoomWidth, maxRoomHeight);
-//     expect(result.origin).to.not.be.an('undefined');
-//     expect(result.width).to.not.be.an('undefined');
-//     expect(result.height).to.not.be.an('undefined');
-//   });
-
-//   it('returned object should only have odd origin cooridnates', () => {
-//     const result = getRandomRoom(map, maxRoomWidth, maxRoomHeight);
-//     expect(result.origin[0] % 2).to.equal(1);
-//     expect(result.origin[1] % 2).to.equal(1);
-//   });
-
-//   it('returned room should fit in map', () => {
-//     const result = getRandomRoom(map, maxRoomWidth, maxRoomHeight);
-//     expect(result.origin[0] + result.width).to.be.below(map.length);
-//     expect(result.origin[1] + result.height).to.be.below(map.length);
-//   });
-// });
+  it('should return a 2D array', () => {
+    const result = initializeEmptyMap(width, height);
+    expect(result[0]).to.be.an('array');
+  });
+  it('returned arary should be specified dimensions', () => {
+    const result = initializeEmptyMap(width, height);
+    expect(result.length).to.equal(height);
+    expect(result[0].length).to.equal(width);
+  });
+});
 
 
 describe('placeRoom()', () => {
-  const map = [];
-  const width = 100,
-        height = 100;
-  let roomWidth = 5,
-        roomHeight = 5;
-
+  let map, origin, roomWidth = 11 , roomHeight = 11;
+  const width = 101, height = 101;
   beforeEach(() => {
-    for(let y = 0; y < height; y++) {
-      const row = [];
-      for (let x = 0; x < width; x++) {
-        row[x] = false;
-      }
-      map.push(row);
-    }
+    map = initializeEmptyMap(width, height);
   });
-
-  it('returns an array', () => {
-    let result = placeRoom(map, roomWidth, roomHeight);
+  it('should return a new map with the new room if the room is placed successfully', () => {
+    const result = placeRoom(map, [1, 1], roomWidth, roomHeight);
     expect(result).to.be.an('array');
-    // let string = '';
-    // for(let y = 0; y < result[0].length; y++ ) {
-      // for(let x = 0; x < result.length; x++) {
-      //   string += result[y][x] ? '#' : '.';
-      // }
-      // string += '\n';
-    // }
-    // console.log(string);
+    let isRoomMade = true;
+    for(let y = 1; y < roomHeight && isRoomMade; y++) {
+      for (let x = 1; x < roomWidth && isRoomMade; x++) {
+        isRoomMade = isRoomMade && result[y][x];
+      }
+    }
+    expect(isRoomMade).to.equal(true);
+  });
+  it('should return false if the room is not placed', () => {
+    map[1][1] = true;
+    const result = placeRoom(map, [1, 1], roomWidth, roomHeight);
+    expect(result).to.equal(false);
+  });
+  it('should throw if coords are not both odd', () => {
+    let invalidCall = () => placeRoom(map, [2, 1], roomWidth, roomHeight);
+    expect(invalidCall).to.throw();
+
+    invalidCall = () => placeRoom(map, [1, 2], roomWidth, roomHeight);
+    expect(invalidCall).to.throw();
+  });
+  it('should throw if room dimensions are not both odd', () => {
+    let invalidCall = () => placeRoom(map, [1, 1], 2, roomHeight);
+    expect(invalidCall).to.throw();
+
+    invalidCall = () => placeRoom(map, [1, 1], roomWidth, 2);
+    expect(invalidCall).to.throw();
+
   });
 });
