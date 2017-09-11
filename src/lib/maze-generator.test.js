@@ -1,6 +1,7 @@
+/* eslint no-undef: 0 */
 import { expect } from 'chai';
 
-import { checkMazeDirection, getEmptySquare, getPotentialMoves, getRandomOddNumber, getRandomOrigin, initializeEmptyMap, placeRoom } from './maze-generator';
+import { addAllRooms, addMaze, checkMazeDirection, extendMaze, getEmptySquare, getPotentialMoves, getRandomOddNumber, getRandomOrigin, initializeEmptyMap, placeRoom } from './maze-generator';
 
 
 describe('getRandomOddNumber()', () => {
@@ -9,11 +10,11 @@ describe('getRandomOddNumber()', () => {
   it('returns a known number if the random param is supplied', () => {
     const random = Math.random();
     const result = getRandomOddNumber(max, random);
-    expect(result).to.equal(((random * max / 2) | 0) * 2 + 1);
+    expect(result).to.equal((parseInt(random * max / 2, 10) * 2) + 1);
   });
   it('returns a maximum of max param if max is odd', () => {
-      const result = getRandomOddNumber(max, 0.99999999999999);
-      expect(result).to.equal(max);
+    const result = getRandomOddNumber(max, 0.99999999999999);
+    expect(result).to.equal(max);
   });
   it('returns a maximum of max - 1 if max is even', () => {
     const result = getRandomOddNumber(16, 0.999999999999);
@@ -25,16 +26,16 @@ describe('getRandomOddNumber()', () => {
   });
   it('returns a whole number even if random is not supplied', () => {
     const result = getRandomOddNumber(max);
-    expect(result | 0).to.equal(result);
+    expect(parseInt(result, 10)).to.equal(result);
   });
 });
 
 
 describe('getRandomOrigin()', () => {
-  const maxWidth = 15,
-        maxHeight = 16;
-  const roomWidth = 9,
-        roomHeight = 7;
+  const maxWidth = 15;
+  const maxHeight = 16;
+  const roomWidth = 9;
+  const roomHeight = 7;
   it('returns an array of 2D coordinates', () => {
     const result = getRandomOrigin(maxWidth, maxHeight, roomWidth, roomHeight);
     expect(result).to.be.an('array');
@@ -44,7 +45,8 @@ describe('getRandomOrigin()', () => {
 
 
 describe('getPotentialMoves()', () => {
-  let width, height;
+  let width;
+  let height;
   beforeEach(() => {
     width = 20;
     height = 20;
@@ -75,8 +77,8 @@ describe('getPotentialMoves()', () => {
 
 
 describe('getEmptySquare()', () => {
-  const width = 20,
-    height = 20;
+  const width = 20;
+  const height = 20;
   let map = [];
 
   beforeEach(() => {
@@ -94,7 +96,7 @@ describe('getEmptySquare()', () => {
   });
 
   it('returns an empty array if no possible moves left', () => {
-    map = map.map(row => row.map(val => true));
+    map = map.map(row => row.map(() => true));
     const result = getEmptySquare(map);
     expect(result).to.be.an('array');
     expect(result.length).to.equal(0);
@@ -109,8 +111,8 @@ describe('getEmptySquare()', () => {
 
 
 describe('initializeEmptyMap()', () => {
-  const width = 100,
-        height = 90;
+  const width = 100;
+  const height = 90;
 
   it('should return a 2D array', () => {
     const result = initializeEmptyMap(width, height);
@@ -125,26 +127,40 @@ describe('initializeEmptyMap()', () => {
 
 
 describe('placeRoom()', () => {
-  let map, origin, roomWidth = 11 , roomHeight = 11;
-  const width = 101, height = 101;
+  let map;
+  // let origin;
+  const roomWidth = 11;
+  const roomHeight = 11;
+  const width = 101;
+  const height = 101;
   beforeEach(() => {
     map = initializeEmptyMap(width, height);
   });
   it('should return a new map with the new room if the room is placed successfully', () => {
     const result = placeRoom(map, [1, 1], roomWidth, roomHeight);
-    expect(result).to.be.an('array');
+    expect(result).to.be.an('object');
+    expect(result).to.have.own.property('newMap');
+    expect(result).to.have.own.property('wasPlaced');
     let isRoomMade = true;
-    for(let y = 1; y < roomHeight && isRoomMade; y++) {
-      for (let x = 1; x < roomWidth && isRoomMade; x++) {
-        isRoomMade = isRoomMade && result[y][x];
+    const { newMap } = result;
+    for (let y = 1; y < roomHeight && isRoomMade; y += 1) {
+      for (let x = 1; x < roomWidth && isRoomMade; x += 1) {
+        isRoomMade = isRoomMade && newMap[y][x];
       }
     }
     expect(isRoomMade).to.equal(true);
   });
-  it('should return false if the room is not placed', () => {
+  it('should return false if the room is not placed, and the room should not be placed', () => {
     map[1][1] = true;
     const result = placeRoom(map, [1, 1], roomWidth, roomHeight);
-    expect(result).to.equal(false);
+    expect(result.wasPlaced).to.equal(false);
+    let isSame = true;
+    for (let y = 0; y < map.length && isSame; y++) {
+      for (let x = 0; x < map[0].length && isSame; x++) {
+        isSame = result.newMap[y][x] === map[y][x];
+      }
+    }
+    expect(isSame).to.equal(true);
   });
   it('should throw if coords are not both odd', () => {
     let invalidCall = () => placeRoom(map, [2, 1], roomWidth, roomHeight);
@@ -165,7 +181,8 @@ describe('placeRoom()', () => {
 
 describe('checkMazeDirection()', () => {
   const origin = [3, 3];
-  const mapWidth = 99, mapHeight = 101;
+  const mapWidth = 99;
+  const mapHeight = 101;
   let map;
   beforeEach(() => {
     map = initializeEmptyMap(mapWidth, mapHeight);
@@ -177,26 +194,107 @@ describe('checkMazeDirection()', () => {
   });
   it('returns false if the direction is blocked', () => {
     // check when in bounds but path blocked
-    let direction = [0, 1];
-    map[origin[1] + 2 * direction[1]][origin[0] + 2 * direction[0]] = true;
-    let result = checkMazeDirection(map, origin, direction);
+    const direction = [0, 1];
+    map[origin[1] + (2 * direction[1])][origin[0] + (2 * direction[0])] = true;
+    const result = checkMazeDirection(map, origin, direction);
     expect(result).to.equal(false);
   });
   it('returns false if direction goes off map', () => {
     // check when out of bounds of map
-    let direction = [-1, 0];
-    let result = checkMazeDirection(map, [1, 1], direction);
+    const direction = [-1, 0];
+    const result = checkMazeDirection(map, [1, 1], direction);
     expect(result).to.equal(false);
   });
 });
 
 
 describe('extendMaze()', () => {
+  let map;
+  beforeEach(() => {
+    map = [
+      [false, false, false, false, false],
+      [false, false, false, false, false],
+      [false, false, false, false, false],
+      [false, false, false, false, false],
+      [false, false, false, false, false],
+    ];
+  });
+  it('returns a new map', () => {
+    const result = extendMaze(map, [1, 1], [1, 0]);
+    expect(result).to.be.an('array');
+    expect(result.length).to.equal(map.length);
+    expect(result[0].length).to.equal(map[0].length);
+  });
+  it('returned map has 2 more filled squares in specified direction', () => {
+    const result = extendMaze(map, [1, 1], [1, 0]);
+    const expected = [
+      [false, false, false, false, false],
+      [false, true, true, true, false],
+      [false, false, false, false, false],
+      [false, false, false, false, false],
+      [false, false, false, false, false],
+    ];
+    const isSame = expected.reduce((acc, row, y) => {
+      row.map((val, x) => {
+        acc = acc && val === result[y][x];
+        return val;
+      });
+      return acc;
+    }, true);
+    expect(isSame).to.equal(true);
+  });
 });
 
+
 describe('addMaze()', () => {
-  let map, start;
+  let map;
+  const width = 100;
+  const height = 100;
   beforeEach(() => {
-    
+    map = initializeEmptyMap(width, height);
+  });
+  it('returns a new map', () => {
+    const result = addMaze(map, [1, 1]);
+    expect(result).to.be.an('array');
+    // let str = '';
+    // for (let y = 0; y < result.length; y++) {
+    //   for (let x = 0; x < result[0].length; x++) {
+    //     result[y][x]
+    //       ? str+= '#'
+    //       : str += '.';
+    //   }
+    //   str += '\n';
+    // }
+    // console.log(str);
+  });
+});
+
+
+describe('addAllRooms()', () => {
+  const maxRoomWidth = 15;
+  const maxRoomHeight = 13;
+  let map;
+  beforeEach(() => {
+    map = initializeEmptyMap(50, 50);
+  });
+  it('returns a new map', () => {
+    const result = addAllRooms(map, maxRoomWidth, maxRoomHeight);
+    expect(result).to.be.an('array');
+    expect(result.length).to.equal(map.length);
+    expect(result[0].length).to.equal(map[0].length);
+  });
+});
+
+
+describe('addRoomsAndMazes()', () => {
+  let map;
+  beforeEach(() => {
+    map = initializeEmptyMap(50, 50);
+  });
+  it('returns a new map', () => {
+    const result = addRoomsAndMazes(map);
+    expect(result).to.be.an('array');
+    expect(result.length).to.equal(map.length);
+    expect(result[0].length).to.equal(map[0].length);
   });
 });

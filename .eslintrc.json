@@ -1,0 +1,25 @@
+{
+	"extends": "airbnb",
+	"plugins": [
+		"react",
+		"jsx-a11y",
+		"import"
+	],
+	"rules": {
+		"no-mixed-operators": [
+			"error",
+			{
+				"groups": [
+					["+", "-", "*", "/", "%", "**"]
+				],
+				"allowSamePrecedence": true
+			}
+		],
+		"no-plusplus": [
+			"error",
+			{
+				"allowForLoopAfterthoughts": true
+			}
+		]
+	}
+}
