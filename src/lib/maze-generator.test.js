@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-import { getEmptySquare, getPotentialMoves, getRandomOddNumber, getRandomOrigin, initializeEmptyMap, placeRoom } from './maze-generator';
+import { checkMazeDirection, getEmptySquare, getPotentialMoves, getRandomOddNumber, getRandomOrigin, initializeEmptyMap, placeRoom } from './maze-generator';
 
 
 describe('getRandomOddNumber()', () => {
@@ -159,6 +159,44 @@ describe('placeRoom()', () => {
 
     invalidCall = () => placeRoom(map, [1, 1], roomWidth, 2);
     expect(invalidCall).to.throw();
+  });
+});
 
+
+describe('checkMazeDirection()', () => {
+  const origin = [3, 3];
+  const mapWidth = 99, mapHeight = 101;
+  let map;
+  beforeEach(() => {
+    map = initializeEmptyMap(mapWidth, mapHeight);
+  });
+  it('returns true if the direction can be taken', () => {
+    const direction = [0, 1];
+    const result = checkMazeDirection(map, origin, direction);
+    expect(result).to.equal(true);
+  });
+  it('returns false if the direction is blocked', () => {
+    // check when in bounds but path blocked
+    let direction = [0, 1];
+    map[origin[1] + 2 * direction[1]][origin[0] + 2 * direction[0]] = true;
+    let result = checkMazeDirection(map, origin, direction);
+    expect(result).to.equal(false);
+  });
+  it('returns false if direction goes off map', () => {
+    // check when out of bounds of map
+    let direction = [-1, 0];
+    let result = checkMazeDirection(map, [1, 1], direction);
+    expect(result).to.equal(false);
+  });
+});
+
+
+describe('extendMaze()', () => {
+});
+
+describe('addMaze()', () => {
+  let map, start;
+  beforeEach(() => {
+    
   });
 });

@@ -1,3 +1,6 @@
+import { inRange } from './helpers';
+
+
 export const getPotentialMoves = (width, height, coords) => {
   const x = coords[0],
         y = coords[1];
@@ -60,9 +63,22 @@ export const placeRoom = (map, origin, roomWidth, roomHeight) => {
     }
     return newMap;
   }
-
   return false;
+};
 
+
+export const checkMazeDirection = (map, origin, direction) => {
+  const y = origin[0], dy = direction[1],
+        x = origin[1], dx = direction[0];
+  // direction goes off the map
+  if(!inRange(y + 2 * dx, 0, map.length) || !inRange(x + 2 * dx, 0, map[0].length)) {
+    return false;
+  }
+  // 1. row must be defined, and
+  // 2. direction adjacent square in that direction must be okay
+  // 3. 2 squares in that direction must also be free
+  return (map[y + dy] !== undefined && !map[y + dy][x + dx]) &&
+    (map[y + 2 * dy] !== undefined && !map[y + 2 * dy][x + 2 * dx]);
 };
 
 // export const placeRoom = (map, width, height) => {
