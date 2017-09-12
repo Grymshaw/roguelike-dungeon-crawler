@@ -1,5 +1,6 @@
 /* eslint "no-mixed-operators": 0 */
 // import { inRange } from './helpers';
+import Rectangle from './Rectangle';
 
 export const getPotentialMoves = (width, height, coords) => {
   const x = coords[0];
@@ -45,7 +46,41 @@ export const initializeEmptyMap = (width, height) => {
 };
 
 
-export const placeRoom = (map, origin, roomWidth, roomHeight) => {
+// export const placeRoom = (map, origin, roomWidth, roomHeight) => {
+//   if (origin[0] % 2 === 0 || origin[1] % 2 === 0 || roomWidth % 2 === 0 || roomHeight % 2 === 0) {
+//     throw (new Error('Invalid arguments -- coords and dimensions must be odd'));
+//   }
+
+//   // check if room fits inside bounds of map
+//   let isPlaceable = origin[1] + roomHeight < map.length - 2
+//     || origin[0] + roomWidth < map[0].width - 2;
+//   // check if room is blocked by existing ones
+//   for (let y = origin[1]; y < roomHeight && isPlaceable; y++) {
+//     for (let x = origin[0]; x < roomWidth && isPlaceable; x++) {
+//       isPlaceable = isPlaceable && !map[y][x];
+//     }
+//   }
+//   const newMap = map.map(row => row.slice());
+//   // fill in map if it's placeable
+//   if (isPlaceable) {
+//     for (let y = origin[1]; y < roomHeight; y++) {
+//       for (let x = origin[0]; x < roomWidth; x++) {
+//         newMap[y][x] = true;
+//       }
+//     }
+//   }
+//   return {
+//     newMap,
+//     wasPlaced: isPlaceable,
+//   };
+// };
+
+
+export const placeRoom = (rooms, map, newRoom) => {
+  const origin = newRoom.origin;
+  const roomWidth = newRoom.width;
+  const roomHeight = newRoom.height;
+
   if (origin[0] % 2 === 0 || origin[1] % 2 === 0 || roomWidth % 2 === 0 || roomHeight % 2 === 0) {
     throw (new Error('Invalid arguments -- coords and dimensions must be odd'));
   }
@@ -53,27 +88,35 @@ export const placeRoom = (map, origin, roomWidth, roomHeight) => {
   // check if room fits inside bounds of map
   let isPlaceable = origin[1] + roomHeight < map.length - 2
     || origin[0] + roomWidth < map[0].width - 2;
-  // check if room is blocked by existing ones
-  for (let y = origin[1]; y < roomHeight && isPlaceable; y++) {
-    for (let x = origin[0]; x < roomWidth && isPlaceable; x++) {
-      isPlaceable = isPlaceable && !map[y][x];
-    }
-  }
-  const newMap = map.map(row => row.slice());
-  // fill in map if it's placeable
+
+  const newRooms = rooms.slice();
   if (isPlaceable) {
-    for (let y = origin[1]; y < roomHeight; y++) {
-      for (let x = origin[0]; x < roomWidth; x++) {
-        newMap[y][x] = true;
-      }
-    }
+    isPlaceable = rooms.filter(cur => newRoom.overlaps(cur)).length === 0;
   }
+
+  if (isPlaceable) {
+    newRooms.push(newRoom);
+  }
+
   return {
-    newMap,
+    newRooms,
     wasPlaced: isPlaceable,
   };
-};
 
+  // if(overlapping.length > 0) {
+  //   return {
+  //     rooms,
+  //     wasPlaced: false,
+  //   };
+  // } else {
+  //   const newRooms = rooms.slice();
+  //   newRooms.push(newRoom);
+  //   return {
+  //     rooms: newRooms,
+  //     wasPlaced: true,
+  //   };
+  // }
+};
 
 export const checkMazeDirection = (map, origin, direction) => {
   const y = origin[1];
@@ -153,17 +196,32 @@ export const addMaze = (map, startCoords) => {
 export const addAllRooms = (map, maxRoomWidth, maxRoomHeight) => {
   const MAX_ATTEMPTS = 50;
   let numAttempts = 0;
+  let rooms = [];
   let newMap = map.map(row => row.slice());
   while (numAttempts < MAX_ATTEMPTS) {
     const width = getRandomOddNumber(maxRoomWidth);
     const height = getRandomOddNumber(maxRoomHeight);
     const origin = getRandomOrigin(newMap[0].length, newMap.length, width, height);
-    const result = placeRoom(newMap, origin, width, height);
+    const result = placeRoom(rooms, newMap, new Rectangle(origin, width, height));
     if (result.wasPlaced) {
-      newMap = result.newMap;
+      rooms = result.newRooms;
+      newMap = addRoomToMap(newMap, rooms[rooms.length - 1]);
       numAttempts = 0;
     } else {
       numAttempts += 1;
+    }
+  }
+  return {
+    newMap,
+    rooms,
+  };
+};
+
+export const addRoomToMap = (map, room) => {
+  const newMap = map.map(row => row.slice());
+  for (let y = room.origin[1]; y < room.height; y++) {
+    for (let x = room.origin[0]; x < room.width; x++) {
+      newMap[y][x] = true;
     }
   }
   return newMap;

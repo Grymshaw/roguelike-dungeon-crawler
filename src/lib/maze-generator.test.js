@@ -2,6 +2,7 @@
 import { expect } from 'chai';
 
 import { addAllRooms, addMaze, checkMazeDirection, extendMaze, getEmptySquare, getPotentialMoves, getRandomOddNumber, getRandomOrigin, initializeEmptyMap, placeRoom } from './maze-generator';
+import Rectangle from './Rectangle';
 
 
 describe('getRandomOddNumber()', () => {
@@ -128,54 +129,100 @@ describe('initializeEmptyMap()', () => {
 
 describe('placeRoom()', () => {
   let map;
-  // let origin;
+  // const rooms = [{ origin: [7, 7], width: 3, height: 3 }];
+  let rooms = [];
   const roomWidth = 11;
   const roomHeight = 11;
   const width = 101;
   const height = 101;
+
   beforeEach(() => {
     map = initializeEmptyMap(width, height);
+    rooms = [];
   });
-  it('should return a new map with the new room if the room is placed successfully', () => {
-    const result = placeRoom(map, [1, 1], roomWidth, roomHeight);
+
+  it('should return an object with newRooms and wasPlaced properties', () => {
+    const result = placeRoom(rooms, map, new Rectangle([1, 1], 3, 3));
     expect(result).to.be.an('object');
-    expect(result).to.have.own.property('newMap');
+    expect(result).to.have.own.property('newRooms');
     expect(result).to.have.own.property('wasPlaced');
-    let isRoomMade = true;
-    const { newMap } = result;
-    for (let y = 1; y < roomHeight && isRoomMade; y += 1) {
-      for (let x = 1; x < roomWidth && isRoomMade; x += 1) {
-        isRoomMade = isRoomMade && newMap[y][x];
-      }
-    }
-    expect(isRoomMade).to.equal(true);
   });
-  it('should return false if the room is not placed, and the room should not be placed', () => {
-    map[1][1] = true;
-    const result = placeRoom(map, [1, 1], roomWidth, roomHeight);
+
+  it('should have the new room in the returned rooms if placed', () => {
+    const result = placeRoom(rooms, map, new Rectangle([1, 1], 3, 3));
+    expect(result.wasPlaced).to.equal(true);
+    expect(result.newRooms.length).to.equal(1);
+    expect(result.newRooms[0]).to.deep.include({ origin: [1, 1], width: 3, height: 3 });
+  });
+
+  it('should not have the new room in the returned rooms', () => {
+    rooms.push(new Rectangle([3, 3], 1, 1));
+    const result = placeRoom(rooms, map, new Rectangle([1, 1], 3, 3));
     expect(result.wasPlaced).to.equal(false);
-    let isSame = true;
-    for (let y = 0; y < map.length && isSame; y++) {
-      for (let x = 0; x < map[0].length && isSame; x++) {
-        isSame = result.newMap[y][x] === map[y][x];
-      }
-    }
-    expect(isSame).to.equal(true);
+    expect(result.newRooms.length).to.equal(1);
+    expect(result.newRooms[0]).to.deep.include({ origin: [3, 3], width: 1, height: 1 });
+    expect(result.newRooms[0]).to.not.deep.include({ origin: [1, 1], width: 3, height: 3 });
   });
+
   it('should throw if coords are not both odd', () => {
-    let invalidCall = () => placeRoom(map, [2, 1], roomWidth, roomHeight);
+    let invalidCall = () => placeRoom(rooms, map, new Rectangle([2, 1], 1, 1));
     expect(invalidCall).to.throw();
 
-    invalidCall = () => placeRoom(map, [1, 2], roomWidth, roomHeight);
+    invalidCall = () => placeRoom(rooms, map, new Rectangle([1, 2], 1, 1));
     expect(invalidCall).to.throw();
   });
+
   it('should throw if room dimensions are not both odd', () => {
-    let invalidCall = () => placeRoom(map, [1, 1], 2, roomHeight);
+    let invalidCall = () => placeRoom(rooms, map, new Rectangle([1, 2], 2, 2));
     expect(invalidCall).to.throw();
 
-    invalidCall = () => placeRoom(map, [1, 1], roomWidth, 2);
+    invalidCall = () => placeRoom(rooms, map, new Rectangle([1, 2], 2, 2));
     expect(invalidCall).to.throw();
   });
+
+
+  it('returned object should have wasPlaced: false');
+
+  // it('should return a new map with the new room if the room is placed successfully', () => {
+  //   const result = placeRoom(map, [1, 1], roomWidth, roomHeight);
+  //   expect(result).to.be.an('object');
+  //   expect(result).to.have.own.property('newMap');
+  //   expect(result).to.have.own.property('wasPlaced');
+  //   let isRoomMade = true;
+  //   const { newMap } = result;
+  //   for (let y = 1; y < roomHeight && isRoomMade; y += 1) {
+  //     for (let x = 1; x < roomWidth && isRoomMade; x += 1) {
+  //       isRoomMade = isRoomMade && newMap[y][x];
+  //     }
+  //   }
+  //   expect(isRoomMade).to.equal(true);
+  // });
+  // it('should return false if the room is not placed, and the room should not be placed', () => {
+  //   map[1][1] = true;
+  //   const result = placeRoom(map, [1, 1], roomWidth, roomHeight);
+  //   expect(result.wasPlaced).to.equal(false);
+  //   let isSame = true;
+  //   for (let y = 0; y < map.length && isSame; y++) {
+  //     for (let x = 0; x < map[0].length && isSame; x++) {
+  //       isSame = result.newMap[y][x] === map[y][x];
+  //     }
+  //   }
+  //   expect(isSame).to.equal(true);
+  // });
+  // it('should throw if coords are not both odd', () => {
+  //   let invalidCall = () => placeRoom(map, [2, 1], roomWidth, roomHeight);
+  //   expect(invalidCall).to.throw();
+
+  //   invalidCall = () => placeRoom(map, [1, 2], roomWidth, roomHeight);
+  //   expect(invalidCall).to.throw();
+  // });
+  // it('should throw if room dimensions are not both odd', () => {
+  //   let invalidCall = () => placeRoom(map, [1, 1], 2, roomHeight);
+  //   expect(invalidCall).to.throw();
+
+  //   invalidCall = () => placeRoom(map, [1, 1], roomWidth, 2);
+  //   expect(invalidCall).to.throw();
+  // });
 });
 
 
@@ -279,9 +326,9 @@ describe('addAllRooms()', () => {
   });
   it('returns a new map', () => {
     const result = addAllRooms(map, maxRoomWidth, maxRoomHeight);
-    expect(result).to.be.an('array');
-    expect(result.length).to.equal(map.length);
-    expect(result[0].length).to.equal(map[0].length);
+    expect(result).to.be.an('object');
+    expect(result.newMap.length).to.equal(map.length);
+    expect(result.newMap[0].length).to.equal(map[0].length);
   });
 });
 
