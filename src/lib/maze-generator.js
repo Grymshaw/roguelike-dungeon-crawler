@@ -22,8 +22,8 @@ export const getPotentialMoves = (width, height, coords) => {
 
 export const getEmptySquare = (map) => {
   for (let y = 1; y < map.length; y += 2) {
-    for (let x = 1; x < map[y].length; x += 2) {
-      const potentialMoves = getPotentialMoves(map[y].length, map.length, [x, y]);
+    for (let x = 1; x < map[0].length; x += 2) {
+      const potentialMoves = getPotentialMoves(map[0].length, map.length, [x, y]);
       if (potentialMoves.filter(move => map[move[1]][move[0]]).length === 0) {
         return [x, y];
       }
@@ -142,7 +142,7 @@ export const getRandomOddNumber = (max, random = Math.random()) => (
   (2 * parseInt(random * max / 2, 10)) + 1
 );
 
-export const getRandomOrigin = (maxWidth, maxHeight, roomWidth, roomHeight) => {
+export const getRandomOrigin = (maxWidth, maxHeight, roomWidth = 1, roomHeight = 1) => {
   const x = getRandomOddNumber(maxWidth - roomWidth);
   const y = getRandomOddNumber(maxHeight - roomHeight);
   return [x, y];
@@ -193,8 +193,31 @@ export const addMaze = (map, startCoords) => {
 };
 
 
+export const addRoomToMap = (map, room) => {
+  const newMap = map.map(row => row.slice());
+  for (let y = room.origin[1]; y < room.height; y++) {
+    for (let x = room.origin[0]; x < room.width; x++) {
+      newMap[y][x] = true;
+    }
+  }
+
+  let str = '';
+  for (let y = 0; y < newMap.length; y++) {
+    for (let x = 0; x < newMap[0].length; x++) {
+      newMap[y][x]
+        ? str+= '#'
+        : str += '.';
+    }
+    str += '\n';
+  }
+  console.log(str);
+
+  return newMap;
+};
+
+
 export const addAllRooms = (map, maxRoomWidth, maxRoomHeight) => {
-  const MAX_ATTEMPTS = 50;
+  const MAX_ATTEMPTS = 200;
   let numAttempts = 0;
   let rooms = [];
   let newMap = map.map(row => row.slice());
@@ -205,6 +228,7 @@ export const addAllRooms = (map, maxRoomWidth, maxRoomHeight) => {
     const result = placeRoom(rooms, newMap, new Rectangle(origin, width, height));
     if (result.wasPlaced) {
       rooms = result.newRooms;
+      // console.log(rooms[rooms.length - 1]);
       newMap = addRoomToMap(newMap, rooms[rooms.length - 1]);
       numAttempts = 0;
     } else {
@@ -212,17 +236,29 @@ export const addAllRooms = (map, maxRoomWidth, maxRoomHeight) => {
     }
   }
   return {
-    newMap,
+    newMap: newMap.map(row => row.slice()),
     rooms,
   };
 };
 
-export const addRoomToMap = (map, room) => {
-  const newMap = map.map(row => row.slice());
-  for (let y = room.origin[1]; y < room.height; y++) {
-    for (let x = room.origin[0]; x < room.width; x++) {
-      newMap[y][x] = true;
+
+export const addAllMazes = (map) => {
+  let newMap = map.map(row => row.slice());
+  let start = getEmptySquare(newMap);
+  while (true) {
+    newMap = addMaze(newMap, start);
+    start = getEmptySquare(newMap);
+    if (start.length !== 2) {
+      break;
     }
   }
+  return newMap;
+};
+
+
+export const addRoomsAndMazes = (map) => {
+  const tempMap = map.map(row => row.slice());
+  let { newMap, rooms } = addAllRooms(tempMap);
+  newMap = addAllMazes(newMap);
   return newMap;
 };

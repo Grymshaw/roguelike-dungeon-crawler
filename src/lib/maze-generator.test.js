@@ -1,7 +1,7 @@
 /* eslint no-undef: 0 */
 import { expect } from 'chai';
 
-import { addAllRooms, addMaze, checkMazeDirection, extendMaze, getEmptySquare, getPotentialMoves, getRandomOddNumber, getRandomOrigin, initializeEmptyMap, placeRoom } from './maze-generator';
+import { addAllRooms, addMaze, addRoomsAndMazes, addRoomToMap, checkMazeDirection, extendMaze, getEmptySquare, getPotentialMoves, getRandomOddNumber, getRandomOrigin, initializeEmptyMap, placeRoom } from './maze-generator';
 import Rectangle from './Rectangle';
 
 
@@ -129,10 +129,7 @@ describe('initializeEmptyMap()', () => {
 
 describe('placeRoom()', () => {
   let map;
-  // const rooms = [{ origin: [7, 7], width: 3, height: 3 }];
   let rooms = [];
-  const roomWidth = 11;
-  const roomHeight = 11;
   const width = 101;
   const height = 101;
 
@@ -179,9 +176,6 @@ describe('placeRoom()', () => {
     invalidCall = () => placeRoom(rooms, map, new Rectangle([1, 2], 2, 2));
     expect(invalidCall).to.throw();
   });
-
-
-  it('returned object should have wasPlaced: false');
 
   // it('should return a new map with the new room if the room is placed successfully', () => {
   //   const result = placeRoom(map, [1, 1], roomWidth, roomHeight);
@@ -329,19 +323,48 @@ describe('addAllRooms()', () => {
     expect(result).to.be.an('object');
     expect(result.newMap.length).to.equal(map.length);
     expect(result.newMap[0].length).to.equal(map[0].length);
+
+    // const temp = addRoomToMap(map, new Rectangle([43, 43], 5, 5));
+    // console.log(result);
+    // const temp = result.newMap;
+    // let str = '';
+    // for (let y = 0; y < temp.length; y++) {
+    //   for (let x = 0; x < temp[0].length; x++) {
+    //     temp[y][x]
+    //       ? str+= '#'
+    //       : str += '.';
+    //   }
+    //   str += '\n';
+    // }
+    // console.log(str);
+
   });
 });
 
 
-describe('addRoomsAndMazes()', () => {
-  let map;
-  beforeEach(() => {
-    map = initializeEmptyMap(50, 50);
-  });
-  it('returns a new map', () => {
-    const result = addRoomsAndMazes(map);
-    expect(result).to.be.an('array');
-    expect(result.length).to.equal(map.length);
-    expect(result[0].length).to.equal(map[0].length);
-  });
-});
+// describe('addRoomsAndMazes()', () => {
+//   let map;
+//   beforeEach(() => {
+//     map = initializeEmptyMap(50, 50);
+//   });
+//   it('returns a new map', () => {
+//     const result = addRoomsAndMazes(map);
+//     expect(result).to.be.an('array');
+//     expect(result.length).to.equal(map.length);
+//     expect(result[0].length).to.equal(map[0].length);
+//   });
+
+//   // it('should look like a map', () => {
+//   //   const result = addRoomsAndMazes(map);
+//   //   let str = '';
+//   //   for (let y = 0; y < newMap.length; y++) {
+//   //     for (let x = 0; x < newMap[0].length; x++) {
+//   //       newMap[y][x]
+//   //         ? str += '#'
+//   //         : str += '.';
+//   //     }
+//   //     str += '\n';
+//   //   }
+//   //   console.log(str);
+//   // });
+// });
